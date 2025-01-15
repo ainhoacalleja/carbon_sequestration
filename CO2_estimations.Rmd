@@ -1,0 +1,187 @@
+---
+title: "Carbon_Standars_Examples"
+author: "Ainhoa Calleja Rodriguez"
+date: "2025-01-15"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Generic example:
+Input Data: The dataset tree_data contains Plot_ID, Tree_ID, and Biomass_kg (tree biomass in kilograms).
+Conversion Factor: A standard biomass-to-carbon conversion factor of 0.47 is used (the biomass to carbon conversion factor is typically around 0.5; is a good approximation of the typical carbon content in the biomass of terrestrial vegetation, and is consistent with the Good Practice Guidance in LULUCF by the IPCC (2003)).
+Calculations:
+Carbon_kg for each tree is calculated by multiplying Biomass_kg by the conversion factor.
+Carbon stocks are summarized for each plot.
+Visualization: A bar plot shows the total carbon stock per plot.
+
+```{r cars}
+# Load libraries
+library(dplyr)  
+library(ggplot2)  
+
+# Create a dataset: Tree biomass (in kg) for different plots
+tree_data <- data.frame(
+  Plot_ID = c(1, 1, 1, 2, 2, 3, 3, 3),
+  Tree_ID = c(101, 102, 103, 201, 202, 301, 302, 303),
+  Biomass_kg = c(500, 350, 600, 800, 450, 400, 300, 200)
+)
+
+# Biomass-to-carbon conversion factor (here we use 0.47)
+conversion_factor <- 0.47
+
+# Calculate carbon stock for each tree
+tree_data <- tree_data %>%
+  mutate(Carbon_kg = Biomass_kg * conversion_factor)
+
+# carbon stocks per plot
+plot_carbon <- tree_data %>%
+  group_by(Plot_ID) %>%
+  summarise(
+    Total_Biomass_kg = sum(Biomass_kg),
+    Total_Carbon_kg = sum(Carbon_kg)
+  )
+
+print(plot_carbon)
+
+# Visualize the results
+ggplot(plot_carbon, aes(x = factor(Plot_ID), y = Total_Carbon_kg)) +
+  geom_bar(stat = "identity", fill = "darkgreen", color = "black") +
+  labs(
+    title = "Carbon Stocks by Plot",
+    x = "Plot ID",
+    y = "Total Carbon (kg)"
+  ) +
+  theme_minimal()
+
+```
+
+## VCS (Verified Carbon Standard)
+Scenario: Estimating avoided deforestation using historical land-use data.
+
+```{r pressure, echo=TRUE}
+
+# Create example dataset: Deforestation rates (hectares per year) over 10 years
+land_use_data <- data.frame(
+  Year = 2010:2019,
+  Deforestation_ha = c(1000, 950, 900, 850, 800, 750, 700, 650, 600, 550)
+)
+
+# Calculate the baseline (historical average deforestation rate)
+baseline_deforestation <- mean(land_use_data$Deforestation_ha)
+
+# Assume a project intervention reduced deforestation to 400 ha/year
+project_deforestation <- 400
+
+# Calculate avoided deforestation
+avoided_deforestation <- baseline_deforestation - project_deforestation
+
+# Estimate carbon savings (assuming 50 tCO2/ha for forest carbon density)
+carbon_density <- 50  # tCO2/ha
+avoided_emissions <- avoided_deforestation * carbon_density
+
+# Results
+cat("Baseline deforestation rate:", baseline_deforestation, "ha/year\n")
+cat("Avoided deforestation:", avoided_deforestation, "ha/year\n")
+cat("Carbon savings:", avoided_emissions, "tCO2/year\n")
+
+```
+
+## GS (Gold Standard)
+Scenario: Estimating emissions reductions from a renewable energy project (solar).
+```{r , echo=TRUE}
+
+# Hypothetical dataset: Energy generation (MWh) over 12 months
+solar_data <- data.frame(
+  Month = month.abb,
+  Energy_MWh = c(200, 220, 210, 250, 300, 310, 320, 300, 290, 280, 260, 250)
+)
+
+# Calculate emissions reductions (fake grid emission factor: 0.4 tCO2/MWh)
+grid_emission_factor <- 0.4  # tCO2/MWh
+solar_data <- solar_data %>%
+  mutate(Emissions_Reduced_tCO2 = Energy_MWh * grid_emission_factor)
+
+# Total emissions reduced in a year
+total_reductions <- sum(solar_data$Emissions_Reduced_tCO2)
+
+# Results and visualization
+print(solar_data)
+cat("Total emissions reduced:", total_reductions, "tCO2/year\n")
+
+ggplot(solar_data, aes(x = Month, y = Emissions_Reduced_tCO2)) +
+  geom_bar(stat = "identity", fill = "blue", color = "black") +
+  labs(
+    title = "Emissions Reductions from Solar Energy",
+    x = "Month",
+    y = "Emissions Reduced (tCO2)"
+  ) +
+  theme_minimal()
+
+
+```
+
+## ACR (American Carbon Registry)
+Scenario: Estimating soil organic carbon (SOC) sequestration in an agricultural project.
+
+```{r, echo=TRUE}
+
+
+# Example dataset: SOC (tC/ha) before and after project implementation
+soc_data <- data.frame(
+  Field_ID = 1:5,
+  SOC_Before_tC_ha = c(10, 12, 15, 11, 14),
+  SOC_After_tC_ha = c(15, 16, 20, 17, 19)
+)
+
+# Calculate SOC sequestration per field
+soc_data <- soc_data %>%
+  mutate(SOC_Sequestration_tC_ha = SOC_After_tC_ha - SOC_Before_tC_ha)
+
+# Total SOC sequestration across fields
+total_soc_sequestration <- sum(soc_data$SOC_Sequestration_tC_ha)
+
+# Convert to CO2 equivalent (1 tC = 3.67 tCO2)
+total_soc_sequestration_CO2 <- total_soc_sequestration * 3.67
+
+# Results
+print(soc_data)
+cat("Total SOC sequestration (tCO2):", total_soc_sequestration_CO2, "\n")
+
+
+```
+## CRCF (EU Carbon Removal Certification Framework)
+Scenario: Estimating carbon removals in afforestation/reforestation.
+(Note from EcoMatcher: The weight of CO2 in trees is determined by the ratio of CO2 to C is 44/12 = 3.67. Therefore, to determine the weight of carbon dioxide sequestered in the tree, multiply the weight of carbon in the tree by 3.67.)
+```{r, echo=TRUE}
+
+# Hypothetical dataset: Tree growth and carbon sequestration over 5 years
+afforestation_data <- data.frame(
+  Year = 1:5,
+  Biomass_kg = c(5000, 10000, 15000, 20000, 25000)  # Biomass in kg
+)
+
+# Conversion factors
+biomass_to_carbon <- 0.47  # Biomass to carbon conversion
+carbon_to_CO2 <- 3.67  # Carbon to CO2 conversion
+
+# Calculate carbon removals each year
+afforestation_data <- afforestation_data %>%
+  mutate(
+    Carbon_kg = Biomass_kg * biomass_to_carbon,
+    Carbon_Removal_tCO2 = Carbon_kg * carbon_to_CO2 / 1000
+  )
+
+# Total carbon removals over 5 years
+total_removals <- sum(afforestation_data$Carbon_Removal_tCO2)
+
+# Results
+print(afforestation_data)
+cat("Total carbon removals (tCO2):", total_removals, "\n")
+
+```
+
